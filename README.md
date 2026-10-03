@@ -76,24 +76,41 @@ de alta dimensão:
 
 1. `DummyClassifier` como referência mínima;
 2. `LogisticRegression` como baseline oficial;
-3. `LinearSVC` como candidato principal para superar o baseline.
+3. `LinearSVC` como modelo principal;
+4. `KNeighborsClassifier` com distância de cosseno como comparação baseada em vizinhança.
 
-A normalização L2 dos embeddings e o balanceamento das classes serão aplicados
-dentro de um `Pipeline`. O valor de `C` será escolhido exclusivamente dentro
-da validação cruzada, evitando que o conjunto de teste influencie o ajuste.
+A normalização L2 dos embeddings e o balanceamento das classes são aplicados
+dentro de um `Pipeline`. No `LinearSVC`, o valor de `C` é escolhido dentro dos
+folds internos da validação aninhada. No KNN, `n_neighbors` e os pesos dos
+vizinhos são escolhidos pelo mesmo procedimento.
 
 ### Validação
 
 Como vários discursos pertencem ao mesmo evento e podem ter o mesmo contexto,
 a divisão não será feita apenas de forma aleatória por linha. Será usada
-validação cruzada estratificada e agrupada por `event_id`. Também será feita
-uma análise adicional agrupada por `deputy_id`, para verificar se o modelo está
-aprendendo posicionamentos ou apenas o estilo de determinados parlamentares.
+validação cruzada estratificada e agrupada por `event_id`.
 
-A métrica principal será `macro-F1`, acompanhada de balanced accuracy, F1 por
-classe e matriz de confusão. O `LinearSVC` só será escolhido como modelo final
-se apresentar desempenho superior ao baseline de forma consistente entre os
-folds.
+A métrica principal será `macro-F1`, acompanhada de balanced accuracy e F1 por
+classe. A avaliação final usa validação cruzada aninhada e agrupada por
+`event_id`: os folds internos escolhem hiperparâmetros e os folds externos
+funcionam como teste não observado. Uma análise adicional agrupada por
+`deputy_id` pode verificar se o modelo está aprendendo posicionamentos ou
+apenas o estilo de determinados parlamentares.
+
+### Resultados atuais
+
+Com 207 discursos que possuem espectro político válido, os resultados globais
+da validação aninhada foram:
+
+| Modelo | Macro-F1 | Balanced accuracy |
+| --- | ---: | ---: |
+| `LogisticRegression` | 0,573 | 0,592 |
+| `KNN` com cosseno | 0,597 | 0,573 |
+| `LinearSVC` | 0,699 | 0,681 |
+
+O `LinearSVC` é, por enquanto, o modelo principal. O KNN supera o baseline e
+funciona como comparação baseada em similaridade, mas fica abaixo do SVC. A
+classe `Centro` continua sendo a mais difícil e possui poucos exemplos.
 
 ### Uso das notícias
 
@@ -111,6 +128,10 @@ Esse método será um experimento complementar de similaridade. Uma notícia mai
 próxima do centróide do partido poderá ser selecionada como exemplo
 representativo para inspeção qualitativa, mas não substituirá todas as notícias
 do partido no treinamento.
+
+O teste direto por centróides alcançou macro-F1 de 0,302 e balanced accuracy de
+0,335. Portanto, os centróides são mantidos para interpretação e recuperação de
+textos semelhantes, não como substitutos do classificador supervisionado.
 
 ## Primeiro acesso
 
@@ -168,10 +189,12 @@ jupyter notebook
 ```text
 .
 ├── content/
+│   ├── argument_embeddings.pt
 │   ├── firearm-carry-speeches-2014-2026.jsonl
+│   ├── news_embeddings.pt
 │   └── noticia_partidos.jsonl
-├── argument_embeddings.pt
-├── news_embeddings.pt
+├── news_party_centroids.pt
+├── news_party_representatives.csv
 ├── ml-project.ipynb
 ├── political-guidance-through-discourse.ipynb
 ├── requirements.txt
@@ -188,8 +211,10 @@ jupyter notebook
   metadados sobre posição e contexto político.
 - `content/noticia_partidos.jsonl`: notícias e textos relacionados a partidos e
   temas políticos.
-- `argument_embeddings.pt`: embeddings dos argumentos dos discursos.
-- `news_embeddings.pt`: embeddings das notícias e seus metadados.
+- `content/argument_embeddings.pt`: embeddings dos argumentos dos discursos.
+- `content/news_embeddings.pt`: embeddings das notícias e seus metadados.
+- `news_party_centroids.pt`: centróides dos embeddings das notícias por partido.
+- `news_party_representatives.csv`: notícia mais próxima do centróide de cada partido.
 - `requirements.txt`: dependências Python do projeto.
 - `README.md`: documentação e instruções de uso.
 - `.gitignore`: arquivos locais que não devem ser versionados, como o ambiente
