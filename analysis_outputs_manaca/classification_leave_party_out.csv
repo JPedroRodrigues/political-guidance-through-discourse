@@ -1,0 +1,15 @@
+atributos,modelo,PR_AUC,ROC_AUC,bal_acc,macroF1,MCC,prec_pos,rec_pos
+A. só deputado (DEP),Regressão logística,0.062,0.361,0.449,0.412,-0.053,0.053,0.286
+A. só deputado (DEP),Random Forest,0.085,0.394,0.545,0.548,0.096,0.167,0.143
+A. só deputado (DEP),Gradient Boosting,0.054,0.286,0.5,0.482,0.0,0.0,0.0
+B. só partido (PARTY),Regressão logística,0.058,0.297,0.343,0.236,-0.178,0.042,0.429
+B. só partido (PARTY),Random Forest,0.1,0.578,0.5,0.482,0.0,0.0,0.0
+B. só partido (PARTY),Gradient Boosting,0.056,0.27,0.5,0.482,0.0,0.0,0.0
+—,Baseline constante,0.07,0.5,0.5,0.482,0.0,0.0,0.0
+—,Regra de alinhamento,0.07,0.5,0.5,0.482,0.0,0.0,0.0
+C. texto completo (DEP+PARTY+GAP),Regressão logística,0.055,0.286,0.25,0.194,-0.294,0.027,0.286
+C. texto completo (DEP+PARTY+GAP),Random Forest,0.06,0.354,0.495,0.479,-0.028,0.0,0.0
+C. texto completo (DEP+PARTY+GAP),Gradient Boosting,0.045,0.134,0.478,0.471,-0.056,0.0,0.0
+D. texto + metadado (C+META),Regressão logística,0.063,0.356,0.331,0.293,-0.176,0.033,0.286
+D. texto + metadado (C+META),Random Forest,0.062,0.363,0.5,0.482,0.0,0.0,0.0
+D. texto + metadado (C+META),Gradient Boosting,0.046,0.167,0.478,0.471,-0.056,0.0,0.0
