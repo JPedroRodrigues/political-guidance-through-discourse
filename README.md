@@ -8,10 +8,9 @@ associados às orientações partidárias.
 ## Sobre o projeto
 
 O objetivo principal é investigar se os discursos parlamentares podem ser
-posicionados no espectro político a partir de seus argumentos e embeddings.
-As notícias publicadas por partidos serão usadas como uma fonte complementar
-para representar posições políticas e comparar os discursos com referências
-partidárias.
+posicionados em três faixas do espectro político a partir de seus argumentos.
+As notícias associadas a partidos funcionam como dados de referência para
+representar posições políticas e treinar o classificador.
 
 A análise é feita em notebooks Jupyter com uso de `pandas`, `numpy`,
 `matplotlib`, `seaborn`, `torch` e `transformers`.
@@ -30,15 +29,25 @@ O projeto contém dois conjuntos de dados em JSON Lines:
 Esses arquivos permitem comparar discursos institucionais com menções na
 mídia e observar padrões de posicionamento ao longo do tempo.
 
-## Objetivos de análise
+## Fluxo da análise
 
-- identificar padrões de posicionamento partidário em temas relevantes;
-- explorar como discursos parlamentares e notícias expressam argumentos sobre
-  segurança, armas e políticas públicas;
-- comparar dados textuais com atributos estruturados dos partidos e dos
-  parlamentares;
-- produzir visualizações e conclusões preliminares para uma investigação mais
-  ampla.
+O notebook `political-guidance-through-discourse.ipynb` executa as seguintes
+etapas:
+
+1. carrega as notícias partidárias e os discursos parlamentares;
+2. extrai os argumentos estruturados dos discursos;
+3. padroniza siglas partidárias e classifica os partidos por espectro;
+4. normaliza as transcrições e remove discursos duplicados;
+5. mascara menções ao próprio partido do deputado;
+6. explora tamanho dos textos, termos frequentes e distribuição partidária;
+7. gera ou carrega embeddings produzidos pelo BERTimbau;
+8. compara TF-IDF e embeddings na classificação do espectro político.
+
+O mascaramento mantém o argumento original em `argument` e cria
+`argument_masked`. As siglas e nomes partidários são substituídos por tokens
+específicos, como `MASKPARTY_A`, para evitar que palavras comuns, como
+“novo”, sejam confundidas com o partido NOVO. Os modelos usam o texto
+mascarado, enquanto o texto original permanece disponível para inspeção.
 
 ## Embeddings disponíveis
 
@@ -65,52 +74,27 @@ específicas. A proposta de agrupamento é:
 - `Centro`: Centro;
 - `Direita`: Centro-direita, Direita e Extrema-direita.
 
-Os rótulos originais, incluindo a classificação em mais categorias, poderão
-ser usados em uma análise secundária. Discursos sem espectro definido serão
-retirados da etapa supervisionada, mas podem continuar na análise exploratória.
+Os rótulos originais são primeiro consolidados nas três faixas. Discursos sem
+espectro definido não devem ser usados na avaliação supervisionada.
 
-### Comparação de modelos
+### Comparação de representações
 
-O experimento deve comparar modelos adequados para poucos exemplos e vetores
-de alta dimensão:
+O notebook treina o mesmo `LinearSVC` em duas representações:
 
-1. `DummyClassifier` como referência mínima;
-2. `LogisticRegression` como baseline oficial;
-3. `LinearSVC` como modelo principal;
-4. `KNeighborsClassifier` com distância de cosseno como comparação baseada em vizinhança.
+1. TF-IDF, usado como baseline textual;
+2. embeddings do BERTimbau, normalizados com norma L2.
 
-A normalização L2 dos embeddings e o balanceamento das classes são aplicados
-dentro de um `Pipeline`. No `LinearSVC`, o valor de `C` é escolhido dentro dos
-folds internos da validação aninhada. No KNN, `n_neighbors` e os pesos dos
-vizinhos são escolhidos pelo mesmo procedimento.
+O parâmetro `C` é escolhido por `GridSearchCV` nas notícias, usando
+`StratifiedGroupKFold` agrupado por partido. Em seguida, o modelo é aplicado
+aos argumentos dos discursos. O balanceamento das classes é feito com
+`class_weight="balanced"`.
 
-### Validação
+### Métricas
 
-Como vários discursos pertencem ao mesmo evento e podem ter o mesmo contexto,
-a divisão não será feita apenas de forma aleatória por linha. Será usada
-validação cruzada estratificada e agrupada por `event_id`.
-
-A métrica principal será `macro-F1`, acompanhada de balanced accuracy e F1 por
-classe. A avaliação final usa validação cruzada aninhada e agrupada por
-`event_id`: os folds internos escolhem hiperparâmetros e os folds externos
-funcionam como teste não observado. Uma análise adicional agrupada por
-`deputy_id` pode verificar se o modelo está aprendendo posicionamentos ou
-apenas o estilo de determinados parlamentares.
-
-### Resultados atuais
-
-Com 207 discursos que possuem espectro político válido, os resultados globais
-da validação aninhada foram:
-
-| Modelo | Macro-F1 | Balanced accuracy |
-| --- | ---: | ---: |
-| `LogisticRegression` | 0,573 | 0,592 |
-| `KNN` com cosseno | 0,597 | 0,573 |
-| `LinearSVC` | 0,699 | 0,681 |
-
-O `LinearSVC` é, por enquanto, o modelo principal. O KNN supera o baseline e
-funciona como comparação baseada em similaridade, mas fica abaixo do SVC. A
-classe `Centro` continua sendo a mais difícil e possui poucos exemplos.
+O notebook imprime a acurácia balanceada na validação das notícias, a
+acurácia balanceada no teste dos argumentos e um relatório de classificação
+por faixa. Os resultados devem ser registrados junto da versão dos dados e
+dos artefatos de embeddings usados no experimento.
 
 ### Uso das notícias
 
@@ -176,9 +160,9 @@ python -m pip install -r requirements.txt
 
 ### 4. Abra o notebook
 
-No VS Code, abra o arquivo `ml-project.ipynb` e
-execute as células em sequência. Também é possível rodar o Jupyter a partir do
-terminal com:
+No VS Code, selecione o ambiente `.venv` como kernel, abra o arquivo
+`political-guidance-through-discourse.ipynb` e execute as células em sequência.
+Também é possível iniciar o Jupyter pelo terminal:
 
 ```bash
 jupyter notebook
@@ -203,10 +187,10 @@ jupyter notebook
 └── .venv/
 ```
 
-- `ml-project.ipynb`: preparação dos dados e geração dos embeddings dos
-  argumentos e das notícias.
-- `political-guidance-through-discourse.ipynb`: exploração dos dados, limpeza,
-  análise e visualizações.
+- `political-guidance-through-discourse.ipynb`: preparação, limpeza,
+  mascaramento, análise exploratória, geração/carregamento de embeddings e
+  classificação.
+- `ml-project.ipynb`: notebook auxiliar de experimentação, quando aplicável.
 - `content/firearm-carry-speeches-2014-2026.jsonl`: discursos parlamentares e
   metadados sobre posição e contexto político.
 - `content/noticia_partidos.jsonl`: notícias e textos relacionados a partidos e
