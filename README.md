@@ -1,19 +1,26 @@
 # Orientação Política Através do Discurso
 
-Este repositório reúne uma análise exploratória de discursos parlamentares e
-notícias relacionadas a partidos e temas políticos, com foco especial em como
-posicionamentos sobre armas, segurança pública e legislação podem estar
-associados às orientações partidárias.
+Análise exploratória de discursos parlamentares e notícias políticas em
+português, com foco em argumentos sobre armas, segurança pública e legislação.
 
 ## Sobre o projeto
 
 O objetivo principal é investigar se os discursos parlamentares podem ser
 posicionados em três faixas do espectro político a partir de seus argumentos.
 As notícias associadas a partidos funcionam como dados de referência para
-representar posições políticas e treinar o classificador.
+representar posições políticas e construir protótipos partidários.
 
 A análise é feita em notebooks Jupyter com uso de `pandas`, `numpy`,
 `matplotlib`, `seaborn`, `torch` e `transformers`.
+
+## Estado atual
+
+O fluxo principal está concentrado em
+`political-guidance-through-discourse.ipynb`. Os embeddings e os artefatos de
+similaridade já gerados estão incluídos no repositório para permitir a análise
+sem repetir imediatamente a etapa de inferência do modelo. A execução completa
+da geração de embeddings pode exigir uma GPU e o download do modelo do
+Hugging Face.
 
 ## Dados disponíveis
 
@@ -55,8 +62,8 @@ Os argumentos dos discursos e as notícias são transformados em vetores pelo
 mesmo modelo BERTimbau:
 `neuralmind/bert-large-portuguese-cased`.
 
-- `argument_embeddings.pt`: embeddings dos argumentos parlamentares;
-- `news_embeddings.pt`: embeddings de 1.061 notícias;
+- `content/argument_embeddings.pt`: embeddings dos argumentos parlamentares;
+- `content/news_embeddings.pt`: embeddings de 1.061 notícias;
 - dimensão dos vetores: 1.024;
 - pooling: média dos embeddings dos tokens (`mean pooling`);
 - notícias: texto formado pela combinação do título e do corpo da notícia.
@@ -117,7 +124,7 @@ O teste direto por centróides alcançou macro-F1 de 0,302 e balanced accuracy d
 0,335. Portanto, os centróides são mantidos para interpretação e recuperação de
 textos semelhantes, não como substitutos do classificador supervisionado.
 
-## Primeiro acesso
+## Como executar
 
 ### 1. Clone o projeto
 
@@ -179,7 +186,6 @@ jupyter notebook
 │   └── noticia_partidos.jsonl
 ├── news_party_centroids.pt
 ├── news_party_representatives.csv
-├── ml-project.ipynb
 ├── political-guidance-through-discourse.ipynb
 ├── requirements.txt
 ├── README.md
@@ -190,7 +196,6 @@ jupyter notebook
 - `political-guidance-through-discourse.ipynb`: preparação, limpeza,
   mascaramento, análise exploratória, geração/carregamento de embeddings e
   classificação.
-- `ml-project.ipynb`: notebook auxiliar de experimentação, quando aplicável.
 - `content/firearm-carry-speeches-2014-2026.jsonl`: discursos parlamentares e
   metadados sobre posição e contexto político.
 - `content/noticia_partidos.jsonl`: notícias e textos relacionados a partidos e
@@ -203,3 +208,13 @@ jupyter notebook
 - `README.md`: documentação e instruções de uso.
 - `.gitignore`: arquivos locais que não devem ser versionados, como o ambiente
   virtual e caches do Jupyter.
+
+## Observações metodológicas
+
+Os resultados são exploratórios e não devem ser interpretados como uma medida
+definitiva da ideologia de parlamentares ou partidos. A classificação depende
+dos rótulos atribuídos aos dados de referência, da cobertura temática dos
+discursos e das escolhas de pré-processamento.
+
+Para reproduzir ou comparar resultados, registre a versão dos dados, o modelo
+de embeddings, os artefatos utilizados e as métricas exibidas pelo notebook.
